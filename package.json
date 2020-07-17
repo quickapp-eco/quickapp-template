@@ -1,0 +1,24 @@
+{
+  "name": "@quickapp-eco/quickapp-template",
+  "version": "0.1.0",
+  "description": "快应用通用模板",
+  "main": " ",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quickapp-eco/quickapp-template.git"
+  },
+  "author": "shenzhim <szmalq@163.com>",
+  "license": "MIT",
+  "dependencies": {},
+  "bugs": {
+    "url": "https://github.com/quickapp-eco/quickapp-template/issues"
+  },
+  "homepage": "https://github.com/quickapp-eco/quickapp-template#readme",
+  "keywords": [
+    "quickapp",
+    "template"
+  ]
+}

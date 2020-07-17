@@ -1,0 +1,250 @@
+<template>
+  <div class="page-summary-root">
+    <div style="flex-direction: column;">
+      <div class="page-summary-desc" onclick="restartTestProcess()">
+        <text>点击重新测试</text>
+      </div>
+      <div class="page-item" for="{{pageTestList}}">
+        <div class="page-item-summary">
+          <text class="page-item-summary-num-name">
+            <span>{{$item.stats.title}}</span>
+          </text>
+          <text onclick="togglePageTestDetailStatus($item)">
+            <span class="page-item-summary-num-total">结果:{{$item.stats.tests}}:</span>
+            <span class="page-item-summary-num-pass">({{$item.stats.passes}}:</span>
+            <span class="page-item-summary-num-fail">{{$item.stats.failures}})</span>
+          </text>
+        </div>
+        <div class="page-item-caselist" show="{{!!$item.showPageTestDetail}}">
+          <div class="case-item {{!$item.err.message ? 'case-item-pass' : 'case-item-fail' }}" for="{{$item.tests}}">
+            <text class="case-item-title" onclick="togglePageErrStackStatus($item)">{{$item.title}}</text>
+            <text if="{{$item.err.message}}" show="{{!!$item.showPageTestErrDetail}}">{{$item.err.stack}}</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-summary-desc" show="{{showCompletedText}}" style="background-color: #d9d7d6;">
+        <text>所有测试已结束</text>
+      </div>
+
+      <div class="page-summary-desc" style="background-color: #d9d7d6; margin-top: 60px;">
+        <text>测试的页面列表</text>
+      </div>
+      <div class="page-item" for="{{pageNameList}}">
+        <div class="page-item-summary" onclick="gotoPage($item.name, $item.params)">
+          <text>{{$item.title}} : {{$item.name}}</text>
+        </div>
+      </div>
+
+      <div class="page-summary-desc" if="{{hasIstanbulCoverage}}" onclick="saveIstanbulCoverageData" style="background-color: #d9d7d6; margin-top: 60px;">
+        <text>保存代码覆盖率数据</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import router from '@system.router'
+  import fetch from '@system.fetch'
+  import prompt from '@system.prompt'
+
+  import {
+    autoCaseList
+  } from '../../../test/autocase'
+
+  /**
+   * 获取下一个自动测试的page
+   */
+  function findNextTestPage() {
+    const list = global.loadData('pageNameList')
+    const item = list.shift()
+    global.saveData('pageNameList', list)
+    return item
+  }
+
+  function waitForOK(time = 100) {
+    return new Promise(resolve => {
+      setTimeout(resolve, time)
+    })
+  }
+
+  function checkIstanbulCoverage () {
+    return !!global.__coverage__
+  }
+
+  export default {
+    private: {
+      // 包含自动测试脚本的case列表
+      pageNameList: [],
+      pageTestList: [],
+      shouldTestAll: false,
+      showCompletedText: false,
+      isRunningTest: false,
+      hasIstanbulCoverage: false
+    },
+    onInit() {
+      this.pageNameList = autoCaseList
+      console.log("global: ", global, autoCaseList)
+      // 初始化自动化测试相关数据
+      if (global.loadData) {
+        global.saveData('pageNameList', this.pageNameList)
+      }
+
+      // 是否启用了代码覆盖率工具
+      this.hasIstanbulCoverage = checkIstanbulCoverage()
+    },
+    onShow() {
+      // 更新pageTestList
+      this.pageTestList = (global.loadData('pageTestList') || []).map(item => {
+        item.showPageTestDetail = false
+        item.tests.forEach(itemCase => {
+          itemCase.showPageTestErrDetail = false
+        })
+        return item
+      })
+      this.shouldTestAll && this.startNextTestPage()
+    },
+    /**
+     * 重启整个所有测试
+     */
+    restartTestProcess() {
+      // 防止连续多次点击
+      if (!this.isRunningTest) {
+        this.isRunningTest = true
+        global.saveData('pageNameList', this.pageNameList)
+        global.saveData('pageTestList', [])
+
+        this.pageTestList = []
+        // 重置测试结束文本的显示状态
+        this.showCompletedText = false
+        // 自动跑测试下一个测试用例
+        this.shouldTestAll = true
+        // 启动下个测试用例
+        this.startNextTestPage()
+      }
+    },
+    /**
+     * 启动下个测试用例
+     */
+    async startNextTestPage() {
+      const pageItem = findNextTestPage()
+      if (pageItem) {
+        console.info(`下个测试用例：${pageItem.title}：${pageItem.name}`)
+
+        await waitForOK(1000)
+        console.info(`开始测试页面：${pageItem.title}：${pageItem.name}`)
+        router.push({
+          uri: pageItem.name,
+          params: pageItem.params
+        })
+      } else {
+        console.info(`测试用例列表执行完毕`)
+
+        this.isRunningTest = false
+        this.showCompletedText = true
+        this.shouldTestAll = false
+      }
+    },
+    gotoPage(path, params) {
+      // 单个页面的点击跳转：不会在测试后，自动返回
+      params = Object.assign({
+        back: 'false'
+      }, params)
+
+      router.push({
+        uri: path,
+        params
+      })
+    },
+    togglePageTestDetailStatus($item) {
+      $item.showPageTestDetail = !$item.showPageTestDetail
+    },
+    togglePageErrStackStatus($item) {
+      $item.showPageTestErrDetail = !$item.showPageTestErrDetail
+    },
+    // 保存在项目目录下
+    saveIstanbulCoverageData () {
+      // 代码覆盖率的数据
+      const dataCoverage = global.__coverage__
+      // TODO：记得更新到您的PC服务器地址
+      fetch.fetch({
+        url: `http://10.221.130.186:8000/data/coverage`,
+        method: 'POST',
+        data: {
+          coverage: dataCoverage
+        },
+        header: {
+          'Content-Type': 'application/json'
+        },
+        success: () => {
+          prompt.showToast({ message: `保存成功` })
+
+        },
+        fail: (err) => {
+          prompt.showToast({ message: `保存失败：${JSON.stringify(err)}` })
+        }
+      })
+    }
+  }
+</script>
+
+<style>
+  .page-summary-root {
+    background-color: #fbf9fe;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .page-summary-desc {
+    padding: 20px;
+    justify-content: center;
+    background-color: #ffe4c4;
+  }
+
+  .page-item {
+    flex-direction: column;
+  }
+
+  .page-item-summary {
+    padding: 20px;
+    background-color: #efebc6;
+  }
+
+  .page-item-summary-num-name {
+    font-weight: bold;
+    margin-right: 40px;
+  }
+
+  .page-item-summary-num-total {
+    margin-right: 20px;
+  }
+
+  .page-item-summary-num-pass {
+    margin-right: 20px;
+    color: #008000;
+  }
+
+  .page-item-summary-num-fail {
+    margin-right: 20px;
+    color: #FF0000;
+  }
+
+  .page-item-caselist {
+    flex-direction: column;
+    margin-top: 10px;
+  }
+
+  .case-item {
+    flex-direction: column;
+    padding: 10px 50px;
+    margin-bottom: 5px;
+  }
+
+  .case-item-pass {
+    background-color: #008000;
+  }
+
+  .case-item-fail {
+    background-color: #FF0000;
+  }
+</style>

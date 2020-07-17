@@ -1,0 +1,54 @@
+{
+  "name": "{%name%}",
+  "version": "1.0.0",
+  "description": "",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "scripts": {
+    "build": "hap build",
+    "release": "hap release",
+    "server": "hap server",
+    "watch": "hap watch",
+    "start": "hap server & hap watch --devtool=source-map",
+    "lint": "eslint --format codeframe --fix --ext .ux,.js src/",
+    "commit": "git-cz"
+    {%#e2eTest%},
+    "build:test": "hap server & npm run build -- --devtool=source-map --enable-e2e --match-sourcemap",
+    "watch:test": "hap server & npm run watch -- --devtool=source-map --enable-e2e --match-sourcemap"
+    {%/e2eTest%}
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,vue}": "npm run lint"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@quickapp-eco/qappwebp-webpack-plugin": "^0.1.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^6.8.0",
+    "eslint-plugin-ux": "^0.0.2",
+    "hap-toolkit": "^0.7.0",
+    "hybrid-chai": "0.0.1",
+    "hybrid-mocha": "0.0.2",
+    "husky": "^4.2.3",
+    {%#lettStyles%}
+    "less": "^3.11.1",
+    "less-loader": "^5.0.0",
+    {%/lettStyles%}
+    "lint-staged": "^10.0.7",
+    "nyc": "^15.0.1"
+  },
+  "dependencies": {
+    {%#qappx%}
+    "@quickapp-eco/qappx": "^0.1.0",
+    {%/qappx%}
+    "@quickapp-eco/quickapp-axios": "^0.1.0"
+  }
+}

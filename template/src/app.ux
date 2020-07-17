@@ -1,0 +1,25 @@
+<script>
+/**
+ * @file 应用级别的配置，供所有页面公用
+ */
+import './global'
+import './regenerator'
+import util from './util'
+{%#qappx%}
+import storePlugin from './store'
+{%/qappx%}
+import manifest from './manifest.json'
+import { UpdateManager } from '@quickapp-eco/qapp-utils'
+
+export default {
+  showMenu: util.showMenu,
+  createShortcut: util.createShortcut,
+  onCreate(){
+    // check minPlatformVersion
+    UpdateManager.checkForUpdate(manifest.minPlatformVersion)
+  },
+  {%#qappx%}
+  plugins: [ storePlugin ]
+  {%/qappx%}
+}
+</script>

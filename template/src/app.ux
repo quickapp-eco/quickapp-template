@@ -9,15 +9,11 @@ import util from './util'
 import storePlugin from './store'
 {%/qappx%}
 import manifest from './manifest.json'
-import { UpdateManager } from '@quickapp-eco/qapp-utils'
 
 export default {
   showMenu: util.showMenu,
   createShortcut: util.createShortcut,
-  onCreate(){
-    // check minPlatformVersion
-    UpdateManager.checkForUpdate(manifest.minPlatformVersion)
-  },
+  onCreate(){},
   {%#qappx%}
   plugins: [ storePlugin ]
   {%/qappx%}

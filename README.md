@@ -11,7 +11,6 @@
 - 状态管理 [qappx](https://github.com/quickapp-eco/qappx)，按需引用，非必选
 - css 预处理器 [less](https://less.bootcss.com/) ，按需引用，非必选
 - 代码提交规范 [commitizen](https://www.npmjs.com/package/commitizen) + [commitlint](https://www.npmjs.com/package/@commitlint/cli)
-- 快应用工具库 qapp-utils
 - 支持转换图片格式到`webp`以减少 rpk 包大小 [qappwebp-webpack-plugin](https://github.com/quickapp-eco/qappwebp-webpack-plugin)
 
 
